@@ -138,7 +138,7 @@ await generateNewVoteFolder({
     pushToRemote: !argv["vote-repository-path"],
   },
   shareholdersThreshold: secretHolderThreshold(argv),
-  shareholders: argv['secret-holder'],
+  shareholders: argv['secret-holder'] ?? [],
   method: "Condorcet",
   path: argv["vote-repository-path"]
     ? resolve(argv["vote-repository-path"], argv.branch)
