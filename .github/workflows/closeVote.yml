@@ -93,24 +93,19 @@ jobs:
         run: |
           ./votes/initiateNewVote/createCommitOnBranch.mjs \
               "$GITHUB_REPOSITORY" \
-              "$BRANCH_NAME" \
-              "$(
+              "$BRANCH_NAME" "$(
                 # Parent commit SHA
                 git rev-parse HEAD^
-              )" \
-              "$(
+              )" "$(
                 # Modified or added files
                 git show HEAD --name-only --diff-filter=d --pretty=format:
-              )"
-              "$(
+              )" "$(
                 # Deleted files
                 git show HEAD --name-only --diff-filter=D --pretty=format:
-              )"
-              "$(
+              )" "$(
                 # Commit title
                 git log -1 HEAD --pretty=format:%s
-              )"
-              "$(
+              )" "$(
                 # Commit body
                 git log -1 HEAD --pretty=format:%b
               )"

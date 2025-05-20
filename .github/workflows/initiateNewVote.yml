@@ -161,20 +161,16 @@ jobs:
           ./votes/initiateNewVote/createCommitOnBranch.mjs \
             "$GITHUB_REPOSITORY" \
             "$BRANCH_NAME" \
-            "$PARENT_SHA" \
-            "$(
+            "$PARENT_SHA" "$(
               # Modified or added files
               git show HEAD --name-only --diff-filter=d --pretty=format:
-            )"
-            "$(
+            )" "$(
               # Deleted files
               git show HEAD --name-only --diff-filter=D --pretty=format:
-            )"
-            "$(
+            )" "$(
               # Commit title
               git log -1 HEAD --pretty=format:%s
-            )"
-            "$(
+            )" "$(
               # Commit body
               git log -1 HEAD --pretty=format:%b
             )"
@@ -208,20 +204,16 @@ jobs:
             ./votes/initiateNewVote/createCommitOnBranch.mjs \
               "$GITHUB_REPOSITORY" \
               "$STAGING_VOTE_BRANCH" \
-              "$GITHUB_SHA" \
-              "$(
+              "$GITHUB_SHA" "$(
                 # Modified or added files
                 git show HEAD --name-only --diff-filter=d --pretty=format:
-              )"
-              "$(
+              )" "$(
                 # Deleted files
                 git show HEAD --name-only --diff-filter=D --pretty=format:
-              )"
-              "$(
+              )" "$(
                 # Commit title
                 git log -1 HEAD --pretty=format:%s
-              )"
-              "$(
+              )" "$(
                 # Commit body
                 git log -1 HEAD --pretty=format:%b
               )"
