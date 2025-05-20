@@ -44,7 +44,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/$GITHUB_REPOSITORY/git/refs \
-            -f ref='refs/heads/$STAGING_VOTE_BRANCH' \
+            -f ref="refs/heads/$STAGING_VOTE_BRANCH" \
             -f sha="$BASE_SHA" || true
           gh pr edit "$PR_URL" --base "$STAGING_VOTE_BRANCH"
         env:
