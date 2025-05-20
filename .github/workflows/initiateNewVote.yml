@@ -48,7 +48,7 @@ jobs:
             -f sha="$BASE_SHA" || true
           gh pr edit "$PR_URL" --base "$STAGING_VOTE_BRANCH"
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_URL: ${{ github.event.pull_request.html_url }}
   initiate-new-vote:
@@ -141,7 +141,7 @@ jobs:
             --header-instructions "$__HEADER_INSTRUCTIONS" \
             --footer-instructions "$__FOOTER_INSTRUCTIONS"
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
           __BRANCH: ${{ steps.data.outputs.branchName }}
           __SUBJECT: ${{ fromJSON(steps.data.outputs.json_data).subject }}
           __SHUFFLE_CANDIDATES: ${{ fromJSON(steps.data.outputs.json_data).canShuffleCandidates }}
@@ -175,7 +175,7 @@ jobs:
               git log -1 HEAD --pretty=format:%b
             )"
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
           BRANCH_NAME: ${{ steps.data.outputs.branchName }} 
       - name: Open the vote PR
         run: |
@@ -185,7 +185,7 @@ jobs:
             --subject "$__SUBJECT" \
             --pr-intro "$__PR_INTRO"
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
           __BRANCH: ${{ steps.data.outputs.branchName }}
           __SUBJECT: ${{ fromJSON(steps.data.outputs.json_data).subject }}
           __PR_INTRO: ${{ fromJSON(steps.data.outputs.json_data).prBody }}
@@ -233,4 +233,4 @@ jobs:
         env:
           HEAD: ${{ github.event.repository.default_branch }}
           REPO_ID: ${{ github.event.repository.id }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}

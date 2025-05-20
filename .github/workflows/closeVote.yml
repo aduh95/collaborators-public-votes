@@ -110,7 +110,7 @@ jobs:
                 git log -1 HEAD --pretty=format:%b
               )"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           BRANCH_NAME: ${{ toJSON(steps.branch.outputs.head) }}
       - name: Publish vote summary comment
         run: |
