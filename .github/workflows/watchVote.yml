@@ -35,10 +35,11 @@ jobs:
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "markdown<<$EOF" >> "$GITHUB_OUTPUT"
-          gh pr view "${{ github.event.pull_request.html_url }}" --json body --jq '.body' >> "$GITHUB_OUTPUT"
+          gh pr view "$PR_URL" --json body --jq '.body' >> "$GITHUB_OUTPUT"
           echo "$EOF" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
       - name: Get updated vote status
         id: status
         run:
@@ -53,17 +54,19 @@ jobs:
           PR_DESCRIPTION: ${{steps.desc.outputs.markdown}}
       - name: Update PR description
         run:
-          gh pr edit "${{ github.event.pull_request.html_url }}" --body "$BODY"
+          gh pr edit "$PR_URL" --body "$BODY"
         env:
           BODY: ${{ fromJSON(steps.status.outputs.prStatus).body }}
           GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
       - name: Add comment if some invalid commits were found
         if: fromJSON(steps.status.outputs.prStatus).hasFailures
         run:
-          gh pr comment "${{ github.event.pull_request.html_url }}" -b
+          gh pr comment "$PR_URL" -b
           "$SUMMARY"
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
           SUMMARY:
             ${{ fromJSON(steps.status.outputs.prStatus).invalidCommitReason }}
       - name: Mark workflow as failed if some invalid commits were found

@@ -27,25 +27,28 @@ jobs:
           echo "URL=${{ github.event.repository.html_url }}/pull/${{ github.event.inputs.pr || github.event.issue.number }}" >> "$GITHUB_OUTPUT"
       - name: Filter comments
         id: comments
-        run: gh pr view ${{ steps.pr-url.outputs.URL }} --json
+        run: gh pr view "$PR_URL" --json
           comments --jq '.comments | map(.body | select(contains("-----BEGIN
           SHAMIR KEY PART-----"))) | "comments=" + tostring' >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.pr-url.outputs.URL }}
       - name: Get PR branch
         id: branch
-        run: gh pr view ${{ steps.pr-url.outputs.URL }} --json
+        run: gh pr view "$PR_URL" --json
           headRefName --jq '"head=" + .headRefName' >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.pr-url.outputs.URL }}
       - name: Compute number of commits in the PR
         id: nb-of-commits
         run: |
-          NB_OF_COMMITS=$(gh pr view --json commits --jq '.commits | length' "${{ steps.pr-url.outputs.URL }}")
+          NB_OF_COMMITS=$(gh pr view --json commits --jq '.commits | length' "$PR_URL")
           echo "exact=$NB_OF_COMMITS" >> $GITHUB_OUTPUT
           echo "minusOne=$(($NB_OF_COMMITS - 1))" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.pr-url.outputs.URL }}
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29  # v4.1.6
         with:
           # Loading the default branch so we use the last version of the mailmap
@@ -61,9 +64,11 @@ jobs:
           git config --global user.name "Node.js GitHub Bot"
       - name: Load vote branch
         run: |
-          git fetch origin '${{ steps.branch.outputs.head }}'
+          git fetch origin "$HEAD_BRANCH"
           git reset FETCH_HEAD --mixed
-          git checkout HEAD -- '${{ steps.branch.outputs.head }}'
+          git checkout HEAD -- "$HEAD_BRANCH"
+        env:
+          HEAD_BRANCH: ${{ steps.branch.outputs.head }}
       - run: npm install @node-core/caritat
       - name: Attempt closing the vote
         id: vote-summary
@@ -72,45 +77,50 @@ jobs:
             EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
             echo "markdown<<$EOF"
             ./votes/initiateNewVote/decryptPrivateKeyAndCloseVote.mjs \
-              --remote origin --branch "${{ steps.branch.outputs.head }}" \
+              --remote origin --branch "$HEAD_BRANCH" \
               --fromCommit "FETCH_HEAD~${{ steps.nb-of-commits.outputs.minusOne }}" \
               --toCommit "FETCH_HEAD" \
-              --prURL "${{ steps.pr-url.outputs.URL }}" \
+              --prURL "$PR_URL" \
               --save-markdown-summary summaryComment.md \
               --comments "$COMMENTS" --commit-json-summary
             echo "$EOF"
           } >> "$GITHUB_OUTPUT"
         env:
           COMMENTS: ${{ steps.comments.outputs.comments }}
-      - name: Install ghcommit
-        run: go install github.com/planetscale/ghcommit@8c6d9af75a7814768ce871cde246224d45bd8c04
+          HEAD_BRANCH: ${{ steps.branch.outputs.head }}
+          PR_URL: ${{ steps.pr-url.outputs.URL }}
       - name: Push to the PR branch
         run: |
-          GH_COMMIT_PATH="$(go env GOPATH)/bin/ghcommit" COMMIT_MESSAGE="$(
-            git log -1 HEAD --pretty=format:%B
-          )" SHA="$(
-            git rev-parse HEAD^
-          )" DELETED_FILES="$(
-            git show HEAD --name-only --diff-filter=D --pretty=format:
-          )" ADDED_FILES="$(
-            git show HEAD --name-only --diff-filter=d --pretty=format:
-          )" node --input-type=module <<'EOF'
-            import { spawnSync } from "node:child_process";
-            const {GH_COMMIT_PATH, COMMIT_MESSAGE, SHA, DELETED_FILES, ADDED_FILES} = process.env;
-            spawnSync(GH_COMMIT_PATH, [
-              '-r', ${{ toJSON(github.repository) }},
-              '-b', ${{ toJSON(steps.branch.outputs.head) }},
-              '-m', COMMIT_MESSAGE,
-              '--sha', SHA,
-              ...DELETED_FILES.split('\n').filter(Boolean).flatMap(file => ['--delete', file]),
-              ...ADDED_FILES.split('\n').filter(Boolean).flatMap(file => ['--add', file]),
-            ], { stdio: 'inherit' });
-          EOF
+          ./votes/initiateNewVote/createCommitOnBranch.mjs \
+              "$GITHUB_REPOSITORY" \
+              "$BRANCH_NAME" \
+              "$(
+                # Parent commit SHA
+                git rev-parse HEAD^
+              )" \
+              "$(
+                # Modified or added files
+                git show HEAD --name-only --diff-filter=d --pretty=format:
+              )"
+              "$(
+                # Deleted files
+                git show HEAD --name-only --diff-filter=D --pretty=format:
+              )"
+              "$(
+                # Commit title
+                git log -1 HEAD --pretty=format:%s
+              )"
+              "$(
+                # Commit body
+                git log -1 HEAD --pretty=format:%b
+              )"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ toJSON(steps.branch.outputs.head) }}
       - name: Publish vote summary comment
         run: |
-          gh pr comment "${{ steps.pr-url.outputs.URL }}" --body-file summaryComment.md
+          gh pr comment "$PR_URL" --body-file summaryComment.md
         env:
           GH_TOKEN: ${{ github.token }}
           SUMMARY: ${{ steps.vote-summary.outputs.markdown }}
+          PR_URL: ${{ steps.pr-url.outputs.URL }}
