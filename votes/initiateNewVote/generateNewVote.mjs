@@ -119,7 +119,7 @@ if (!argv.subject) {
   throw new Error("You must pass a subject");
 }
 
-await generateNewVoteFolder({
+const options = {
   candidates: argv.candidate,
   headerInstructions: argv["header-instructions"],
   footerInstructions: argv["footer-instructions"],
@@ -143,7 +143,10 @@ await generateNewVoteFolder({
   path: argv["vote-repository-path"]
     ? resolve(argv["vote-repository-path"], argv.branch)
     : argv.branch,
-});
+}
+
+console.log(options);
+await generateNewVoteFolder(options);
 
 if (argv["create-pull-request"]) {
   await createVotePR(argv);

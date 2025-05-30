@@ -9,7 +9,7 @@ export function secretHolderThreshold(argv) {
   if (!argv['secret-holder']?.length) return 1
   if ('secret-holder-threshold' in argv) return Math.min(argv['secret-holder-threshold'], argv['secret-holder'].length)
 
-  return Math.max(argv['secret-holder'].length, Math.min(3, Math.floor(2 * Math.log2(argv['secret-holder'].length))))
+  return Math.min(argv['secret-holder'].length, 3, Math.floor(2 * Math.log2(argv['secret-holder'].length)));
 }
 
 export const prOptions = {
