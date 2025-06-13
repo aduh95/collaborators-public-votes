@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 import count from "@node-core/caritat/countParticipationFromGit";
 import countFromGit from "@node-core/caritat/countBallotsFromGit";
-import { findVoteSubPath } from "./getVoteSubpath.mjs";
+import { findVoteSubPath } from "./utils/getVoteSubpath.mjs";
 
 const { allowedVoters, shares } = JSON.parse(argv[2])
 

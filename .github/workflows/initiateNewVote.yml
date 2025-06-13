@@ -89,17 +89,18 @@ jobs:
           }
           if (candidates.length) console.log('');
           console.log('EOF');
-          for (let i = 0; i < secretHolders.length; i++) {
+          const numberOfSecretHolders = secretHolders?.length ?? 0;
+          for (let i = 0; i < numberOfSecretHolders; i++) {
             const delimiter = createHash('sha256').update(secretHolders[i], 'utf8').digest('base64');
             console.log(`__SECRET_HOLDER_${i}<<${delimiter}`)
             process.stdout.write(secretHolders[i]);
             process.stdout.write(`\n${delimiter}\n`);
           }
           console.log('__SECRET_HOLDERS<<EOF');
-          for (let i = 0; i < secretHolders.length; i++) {
+          for (let i = 0; i < numberOfSecretHolders; i++) {
             console.log(`--secret-holder "$__SECRET_HOLDER_${i}" \\`);
           }
-          if (secretHolders.length) console.log('');
+          if (numberOfSecretHolders) console.log('');
           console.log('EOF');
           EOF
       - name: Reset to the base branch
@@ -129,7 +130,7 @@ jobs:
           fi
       - name: Generate the vote init commit
         run: |
-          ./votes/initiateNewVote/generateNewVote.mjs \
+          ./votes/initiateNewVote/generateVoteInitCommit.mjs \
             --remote origin \
             --github-repo-name "$GITHUB_REPOSITORY" \
             --vote-repository-path . \

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 import countFromGit from "@node-core/caritat/countBallotsFromGit";
-import { findVoteSubPath } from "./getVoteSubpath.mjs";
+import { findVoteSubPath } from "./utils/getVoteSubpath.mjs";
 
 const { values: parsedArgs } = parseArgs({
   options: {
