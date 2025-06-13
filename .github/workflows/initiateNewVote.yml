@@ -129,7 +129,7 @@ jobs:
           fi
       - name: Generate the vote init commit
         run: |
-          ./votes/initiateNewVote/generateNewVote.mjs \
+          ./votes/initiateNewVote/generateVoteInitCommit.mjs \
             --remote origin \
             --github-repo-name "$GITHUB_REPOSITORY" \
             --vote-repository-path . \

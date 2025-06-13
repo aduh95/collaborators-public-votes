@@ -1,8 +1,3 @@
-import { once } from "node:events";
-import { spawn } from "node:child_process";
-import { exit } from "node:process";
-import { Buffer } from "node:buffer";
-
 export const keyServerURL = "hkps://keys.openpgp.org";
 
 export function secretHolderThreshold(argv) {
@@ -41,46 +36,39 @@ export const prOptions = {
 }
 
 export async function createVotePR(argv) {
-  const cp = spawn(
-    "gh",
-    [
-      "api",
-      `repos/${argv["github-repo-name"]}/pulls`,
-      "-F",
-      "base=main",
-      "-F",
-      `head=${argv.branch}`,
-      "-F",
-      `title=${argv.subject}`,
-      "-F",
-      `body=${argv["pr-intro"] ?? ""},
+  const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${argv["github-repo-name"]}/pulls`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.GH_TOKEN}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify({
+      base: 'main',
+      head: argv.branch,
+      title: argv.subject,
+      body: `${argv["pr-intro"] ?? ""},
 
 To close the vote, a minimum of ${secretHolderThreshold(argv)} key parts would need to be revealed.
 
 Vote instructions will follow.`,
-      "--jq",
-      ".html_url",
-    ],
-    { stdio: ["inherit", "pipe", "inherit"] }
-  );
-  // @ts-ignore toArray does exist!
-  const out = cp.stdout.toArray();
-  const [code] = await once(cp, "exit");
-  if (code !== 0) exit(code);
-
-  const prUrl = Buffer.concat(await out)
-    .toString()
-    .trim();
+    }),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create PR: ' + response.statusText, { cause: response })
+  }
+  const { html_url: prURL, url } = await response.json();
 
   {
-    const cp = spawn(
-      "gh",
-      [
-        "pr",
-        "edit",
-        prUrl,
-        "--body",
-        `${argv["pr-intro"] ?? ""}
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${process.env.GH_TOKEN}`,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      body: JSON.stringify({
+        body: `${argv["pr-intro"] ?? ""}
 
 Vote instructions:
 
@@ -95,12 +83,12 @@ ${argv['secret-holder']?.length ?
 run the following command: ${"`"}git node vote ${prUrl} --decrypt-key-part --post-comment${"`"}
 ` : ''}
         `,
-      ],
-      { stdio: "inherit" },
-    );
+      }),
+    });
 
-    const [code] = await once(cp, "exit");
-    if (code !== 0) exit(code);
+    if (!response.ok) {
+      throw new Error('Failed to edit PR: ' + response.statusText, { cause: response })
+    }
   }
 
   console.log("PR created", prUrl);
