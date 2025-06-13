@@ -8,12 +8,12 @@ import count from "@node-core/caritat/countParticipationFromGit";
 import countFromGit from "@node-core/caritat/countBallotsFromGit";
 import { findVoteSubPath } from "./getVoteSubpath.mjs";
 
-const shares = JSON.parse(argv[2])
+const { allowedVoters, shares } = JSON.parse(argv[2])
 
 const START_MARKER = "<!-- BEGIN PARTICIPATION -->";
 const END_MARKER = "<!-- END PARTICIPATION -->";
 
-let mdMessage = `\n\n${START_MARKER}\n\n`;
+let mdMessage = `${START_MARKER}\n\n`;
 let invalidCommitReason = '';
 
 function* toArmoredMessage(str, chunkSize = 64) {
@@ -46,7 +46,7 @@ if (shares.length === 1 && !shares[0].startsWith('-----BEGIN PGP MESSAGE-----'))
         toArmoredMessage(Buffer.from(privateKey).toString("base64"))
       ).join("\n")
     )
-} else {
+} else if (allowedVoters?.length) {
   const participationResult = await count({
     subPath,
     firstCommitRef: env.FIRST_COMMIT_REF,
@@ -80,7 +80,7 @@ let body = env.PR_DESCRIPTION || "";
 const startMarkerIndex = body.indexOf(START_MARKER);
 
 if (startMarkerIndex === -1) {
-  body += mdMessage;
+  body += `\n\n${mdMessage}`;
 } else {
   const endMarkerIndex = body.lastIndexOf(END_MARKER) + END_MARKER.length;
   body =
