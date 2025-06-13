@@ -7,7 +7,7 @@ import { parseArgs } from "node:util";
 
 import generateNewVoteFolder from "@node-core/caritat/generateNewVoteFolder";
 
-import { prOptions, createVotePR, keyServerURL, secretHolderThreshold } from "./_generateNewVotePR.mjs";
+import { prOptions, createVotePR, keyServerURL, secretHolderThreshold } from "./utils/generateNewVotePR.mjs";
 
 const { values: argv } = parseArgs({
   options: {
